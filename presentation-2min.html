@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiftLog — 2분 발표</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--surface:#13131a;--card:#1a1a24;--accent:#7c5cfc;--accent2:#fc5c7d;--green:#22d3a5;--amber:#f5a623;--text:#f0f0f8;--muted:#6b6b8a;--border:rgba(124,92,252,0.18);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;overflow:hidden;}
+  .deck{width:100vw;height:100vh;position:relative;}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:52px 72px 80px;opacity:0;pointer-events:none;transition:opacity .4s ease,transform .4s ease;transform:translateY(18px);}
+  .slide.active{opacity:1;pointer-events:all;transform:translateY(0);}
+  #timer-bar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:100%;transform-origin:left;z-index:100;}
+  #timer-label{position:fixed;top:10px;right:20px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--muted);z-index:100;cursor:pointer;user-select:none;}
+  #timer-label.warn{color:var(--accent2);}
+  #slide-counter{position:fixed;top:10px;left:20px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);z-index:100;}
+  #dots{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:100;}
+  .dot{width:5px;height:5px;border-radius:50%;background:var(--muted);cursor:pointer;transition:all .2s;}
+  .dot.active{background:var(--accent);width:18px;border-radius:3px;}
+  #nav-prev,#nav-next{position:fixed;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:16px;cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  #nav-prev:hover,#nav-next:hover{color:var(--accent);border-color:var(--accent);}
+  #nav-prev{left:14px;}#nav-next{right:14px;}
+  .slide-h{font-family:'Bebas Neue',sans-serif;font-size:54px;color:var(--text);margin-bottom:8px;}
+  .slide-sub{font-size:15px;color:var(--muted);margin-bottom:20px;}
+
+  /* S1 TITLE */
+  .s1-eye{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:18px;}
+  .s1-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,12vw,148px);line-height:.9;background:linear-gradient(135deg,#fff 0%,var(--accent) 55%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:22px;}
+  .s1-sub{font-size:22px;color:var(--muted);font-weight:300;max-width:540px;text-align:center;line-height:1.7;}
+  .s1-tags{margin-top:32px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .tag{padding:7px 18px;border-radius:20px;border:1px solid var(--border);font-size:15px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .tag.hi{border-color:var(--accent);color:var(--accent);}
+
+  /* S2 VISION */
+  .vision-wrap{width:100%;max-width:860px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .vision-hero{grid-column:1/-1;background:linear-gradient(135deg,rgba(124,92,252,.12),rgba(252,92,125,.08));border:1px solid var(--border);border-radius:20px;padding:26px 34px;position:relative;overflow:hidden;}
+  .vision-hero::before{content:'"';position:absolute;font-family:'Bebas Neue',sans-serif;font-size:200px;color:rgba(124,92,252,.06);top:-36px;left:16px;line-height:1;}
+  .vision-hero h2{font-size:clamp(20px,2.6vw,28px);font-weight:700;line-height:1.5;position:relative;}
+  .vision-hero h2 em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .prob-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .prob-card .lbl{font-size:12px;font-family:'JetBrains Mono',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;}
+  .prob-card p{font-size:16px;color:#c0c0d8;line-height:1.7;}
+  .stat-row{display:flex;gap:12px;grid-column:1/-1;}
+  .stat-box{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+  .stat-box .num{font-family:'Bebas Neue',sans-serif;font-size:46px;color:var(--accent);}
+  .stat-box .desc{font-size:14px;color:var(--muted);margin-top:2px;}
+
+  /* S3 WBS */
+  .wbs-wrap{width:100%;max-width:860px;}
+  .wbs-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .wbs-legend{display:flex;gap:12px;}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);}
+  .legend-dot{width:7px;height:7px;border-radius:50%;}
+  .wbs-grid{display:flex;flex-direction:column;gap:6px;}
+  .wbs-row{display:grid;grid-template-columns:210px 1fr 80px;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;transition:border-color .2s;}
+  .wbs-phase{font-size:15px;font-weight:500;}
+  .wbs-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:7px;overflow:hidden;}
+  .wbs-bar{height:100%;border-radius:4px;}
+  .wbs-week{font-size:13px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:right;}
+  .sb{font-size:12px;padding:2px 9px;border-radius:10px;font-family:'JetBrains Mono',monospace;}
+  .done{background:rgba(34,211,165,.15);color:var(--green);}
+  .wip{background:rgba(124,92,252,.15);color:var(--accent);}
+  .todo{background:rgba(107,107,138,.15);color:var(--muted);}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(124,92,252,0)}50%{box-shadow:0 0 20px 3px rgba(124,92,252,.18)}}
+  .wbs-row.current{animation:pulse-glow 2s infinite;border-color:var(--accent);}
+
+  /* S4 TEST */
+  .test-wrap{width:100%;max-width:860px;}
+  .test-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+  .test-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .test-card.green{border-color:rgba(34,211,165,.3);background:rgba(34,211,165,.05);}
+  .test-card.purple{border-color:rgba(124,92,252,.3);}
+  .test-label{font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;color:var(--accent);}
+  .test-label.g{color:var(--green);}
+  .test-items{display:flex;flex-direction:column;gap:6px;}
+  .test-item{font-size:14px;color:#c0c0d8;padding:5px 10px;background:rgba(255,255,255,.04);border-radius:6px;font-family:'JetBrains Mono',monospace;}
+  .test-item.pass::before{content:'✓ ';color:var(--green);}
+  .workflow-row{display:flex;align-items:center;gap:6px;margin-top:16px;flex-wrap:wrap;}
+  .wf-chip{padding:6px 12px;border-radius:20px;font-size:13px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);color:var(--muted);}
+  .wf-arrow{color:var(--accent);font-size:13px;}
+  .bonus-box{grid-column:1/-1;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.3);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;}
+  .bonus-num{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--amber);flex-shrink:0;}
+  .bonus-desc{font-size:14px;color:#d0d0e8;line-height:1.6;}
+
+  /* S5 STACK */
+  .stack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:800px;margin-top:14px;}
+  .stack-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;transition:border-color .2s,transform .2s;}
+  .stack-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .stack-icon{font-size:28px;margin-bottom:8px;}
+  .stack-name{font-size:17px;font-weight:700;margin-bottom:4px;}
+  .stack-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+  .stack-why{font-size:12px;color:var(--accent);margin-top:6px;font-family:'JetBrains Mono',monospace;}
+
+  /* ANIM */
+  .slide.active .vision-hero,.slide.active .prob-card,.slide.active .stat-box,
+  .slide.active .wbs-row,.slide.active .test-card,.slide.active .stack-card{animation:fadeUp .5s ease both;}
+  .slide.active .wbs-row:nth-child(1){animation-delay:.04s}.slide.active .wbs-row:nth-child(2){animation-delay:.08s}
+  .slide.active .wbs-row:nth-child(3){animation-delay:.12s}.slide.active .wbs-row:nth-child(4){animation-delay:.16s}
+  .slide.active .wbs-row:nth-child(5){animation-delay:.20s}.slide.active .wbs-row:nth-child(6){animation-delay:.24s}
+  .slide.active .test-card:nth-child(1){animation-delay:.05s}.slide.active .test-card:nth-child(2){animation-delay:.1s}
+  .slide.active .test-card:nth-child(3){animation-delay:.15s}
+  .slide.active .stack-card:nth-child(1){animation-delay:.05s}.slide.active .stack-card:nth-child(2){animation-delay:.1s}
+  .slide.active .stack-card:nth-child(3){animation-delay:.15s}.slide.active .stack-card:nth-child(4){animation-delay:.2s}
+  .slide.active .stack-card:nth-child(5){animation-delay:.25s}.slide.active .stack-card:nth-child(6){animation-delay:.3s}
+  .slide.active .stat-box:nth-child(1){animation-delay:.2s}.slide.active .stat-box:nth-child(2){animation-delay:.3s}.slide.active .stat-box:nth-child(3){animation-delay:.4s}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div id="timer-bar" style="transform:scaleX(1)"></div>
+<div id="timer-label">2:00</div>
+<div id="slide-counter">1 / 5</div>
+
+<div id="dots">
+  <div class="dot active" onclick="goSlide(0)"></div>
+  <div class="dot" onclick="goSlide(1)"></div>
+  <div class="dot" onclick="goSlide(2)"></div>
+  <div class="dot" onclick="goSlide(3)"></div>
+  <div class="dot" onclick="goSlide(4)"></div>
+</div>
+<button id="nav-prev" onclick="prevSlide()">&#8592;</button>
+<button id="nav-next" onclick="nextSlide()">&#8594;</button>
+
+<div class="deck">
+
+<!-- S1 TITLE -->
+<div class="slide active" id="slide-0">
+  <div class="s1-eye">Vibe Coding Project · 13주차 중간 발표</div>
+  <div class="s1-title">LIFTLOG</div>
+  <div class="s1-sub">점진적 과부하 기록과 1RM 계산이 통합된<br>헬스 전용 모바일 앱</div>
+  <div class="s1-tags">
+    <span class="tag hi"># Flutter</span>
+    <span class="tag hi"># SQLite + Firebase</span>
+    <span class="tag"># Epley 1RM</span>
+    <span class="tag"># MVVM + Riverpod</span>
+  </div>
+</div>
+
+<!-- S2 VISION -->
+<div class="slide" id="slide-1">
+  <div class="vision-wrap">
+    <div class="vision-hero">
+      <h2>헬스장에서 스마트폰 하나로<br><em>점진적 과부하를 설계하고,</em><br>데이터로 성장을 증명한다.</h2>
+    </div>
+    <div class="prob-card">
+      <div class="lbl" style="color:var(--accent2);">😤 문제</div>
+      <p>"저번에 몇 kg 들었더라?" — 기억에만 의존해 정체기를 반복합니다.</p>
+    </div>
+    <div class="prob-card">
+      <div class="lbl" style="color:var(--green);">💡 해결</div>
+      <p>네 번 터치로 기록, 1RM 자동 계산, 진행 차트로 성장을 증명합니다.</p>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="num">≤4</div><div class="desc">탭으로 기록</div></div>
+      <div class="stat-box"><div class="num">10s</div><div class="desc">시작 → 첫 기록</div></div>
+      <div class="stat-box"><div class="num">100%</div><div class="desc">오프라인 동작</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- S3 WBS -->
+<div class="slide" id="slide-2">
+  <div class="wbs-wrap">
+    <div class="wbs-title-row">
+      <div class="slide-h">WBS · 진행 현황</div>
+      <div class="wbs-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>완료</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>진행중</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div>예정</div>
+      </div>
+    </div>
+    <div class="wbs-grid">
+      <div class="wbs-row">
+        <div><span class="sb done">✓ 완료</span><div class="wbs-phase" style="margin-top:4px">기획 &amp; 문서</div></div>
+        <div><div class="wbs-bar-wrap"><div class="wbs-bar" style="width:100%;background:var(--green)"></div></div></div>
+        <div class="wbs-week">10주차</div>
+      </div>
+      <div class="wbs-row">
+        <div><span class="sb done">✓ 완료</span><div class="wbs-phase" style="margin-top:4px">환경 구축 · docs</div></div>
+        <div><div class="wbs-bar-wrap"><div class="wbs-bar" style="width:100%;background:var(--green)"></div></div></div>
+        <div class="wbs-week">11주차</div>
+      </div>
+      <div class="wbs-row">
+        <div><span class="sb done">✓ 완료</span><div class="wbs-phase" style="margin-top:4px">핵심 기능 구현</div></div>
+        <div><div class="wbs-bar-wrap"><div class="wbs-bar" style="width:100%;background:var(--green)"></div></div></div>
+        <div class="wbs-week">12주차</div>
+      </div>
+      <div class="wbs-row current">
+        <div><span class="sb wip">▶ 진행중</span><div class="wbs-phase" style="margin-top:4px">테스트 · AI 워크플로우</div></div>
+        <div><div class="wbs-bar-wrap"><div class="wbs-bar" style="width:50%;background:var(--accent)"></div></div></div>
+        <div class="wbs-week">13주차</div>
+      </div>
+      <div class="wbs-row">
+        <div><span class="sb todo">예정</span><div class="wbs-phase" style="margin-top:4px">배포 &amp; 문서</div></div>
+        <div><div class="wbs-bar-wrap"><div class="wbs-bar" style="width:0%"></div></div></div>
+        <div class="wbs-week">14주차</div>
+      </div>
+      <div class="wbs-row">
+        <div><span class="sb todo">예정</span><div class="wbs-phase" style="margin-top:4px">최종 발표</div></div>
+        <div><div class="wbs-bar-wrap"><div class="wbs-bar" style="width:0%"></div></div></div>
+        <div class="wbs-week">15주차</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S4 TEST + WORKFLOW -->
+<div class="slide" id="slide-3">
+  <div class="test-wrap">
+    <div class="slide-h">테스트 &amp; AI 워크플로우</div>
+    <div class="test-grid">
+      <div class="test-card green">
+        <div class="test-label g">✅ 단위 테스트</div>
+        <div class="test-items">
+          <div class="test-item pass">Epley 1RM — reps=1,8,15</div>
+          <div class="test-item pass">reps=0 → ArgumentError</div>
+          <div class="test-item pass">마이그레이션 v1→v2 데이터 보존</div>
+          <div class="test-item pass">WorkoutVM.addSet() 저장 확인</div>
+          <div class="test-item pass">synced 플래그 업로드 후 = 1</div>
+        </div>
+      </div>
+      <div class="test-card purple">
+        <div class="test-label">🤖 AI 워크플로우 (가산점)</div>
+        <div class="workflow-row" style="margin-top:0;margin-bottom:12px;">
+          <span class="wf-chip">/spec</span><span class="wf-arrow">→</span>
+          <span class="wf-chip">/plan</span><span class="wf-arrow">→</span>
+          <span class="wf-chip">/implement</span>
+        </div>
+        <div class="workflow-row">
+          <span class="wf-chip">/test</span><span class="wf-arrow">→</span>
+          <span class="wf-chip">/review</span><span class="wf-arrow">→</span>
+          <span class="wf-chip">/retro</span>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted);">서브에이전트: @code-reviewer · @test-writer · @bug-investigator</div>
+      </div>
+      <div class="bonus-box">
+        <div class="bonus-num">+5</div>
+        <div class="bonus-desc"><strong style="color:#fff;">AUTHORING.[이름].md</strong> — 이 한 파일로 새 프로젝트에서도<br>동일한 AI Agent 환경을 5분 안에 구축합니다.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S5 STACK -->
+<div class="slide" id="slide-4">
+  <div style="width:100%;max-width:800px">
+    <div class="slide-h">기술 스택 &amp; 핵심 결정</div>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <div class="stack-icon">🐦</div>
+        <div class="stack-name">Flutter</div>
+        <div class="stack-desc">단일 코드로 iOS·Android 동시 지원</div>
+        <div class="stack-why">ADR-0001</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon">🗄️</div>
+        <div class="stack-name">SQLite</div>
+        <div class="stack-desc">오프라인 우선, 집계·마이그레이션 강력</div>
+        <div class="stack-why">ADR-0002</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon">☁️</div>
+        <div class="stack-name">Firebase</div>
+        <div class="stack-desc">Auth 로그인 + Firestore 클라우드 백업</div>
+        <div class="stack-why">ADR-0002</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon">💪</div>
+        <div class="stack-name">에플리 공식</div>
+        <div class="stack-desc">weight × (1 + reps/30) — 5~10회 표준</div>
+        <div class="stack-why">ADR-0003</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon">🏗️</div>
+        <div class="stack-name">MVVM + Riverpod</div>
+        <div class="stack-desc">UI·로직·데이터 분리, 테스트 가능</div>
+        <div class="stack-why">Architecture</div>
+      </div>
+      <div class="stack-card" style="border-color:rgba(34,211,165,.3);background:rgba(34,211,165,.05)">
+        <div class="stack-icon">✅</div>
+        <div class="stack-name">테스트 5개+</div>
+        <div class="stack-desc">단위 5개 · 통합 1개<br>flutter test 실행 가능</div>
+        <div class="stack-why" style="color:var(--green)">docs/testing.md</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+let current=0;
+const total=5;
+const slides=document.querySelectorAll('.slide');
+const dots=document.querySelectorAll('.dot');
+
+function goSlide(n){
+  slides[current].classList.remove('active');
+  dots[current].classList.remove('active');
+  current=(n+total)%total;
+  slides[current].classList.add('active');
+  dots[current].classList.add('active');
+  document.getElementById('slide-counter').textContent=(current+1)+' / '+total;
+}
+function nextSlide(){goSlide(current+1);}
+function prevSlide(){goSlide(current-1);}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nextSlide();}
+  if(e.key==='ArrowLeft'){e.preventDefault();prevSlide();}
+});
+
+const TOTAL_SECS=120;
+let remaining=TOTAL_SECS,started=false,timerInterval;
+const bar=document.getElementById('timer-bar');
+const lbl=document.getElementById('timer-label');
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function tick(){
+  remaining--;
+  bar.style.transform='scaleX('+(remaining/TOTAL_SECS)+')';
+  lbl.textContent=fmt(remaining);
+  if(remaining<=30){lbl.classList.add('warn');bar.style.background='linear-gradient(90deg,#fc5c7d,#f5a623)';}
+  if(remaining<=0){clearInterval(timerInterval);lbl.textContent='⏱ 종료';bar.style.transform='scaleX(0)';}
+}
+function startOnce(){if(!started){started=true;timerInterval=setInterval(tick,1000);}}
+document.getElementById('nav-next').addEventListener('click',startOnce);
+document.addEventListener('keydown',e=>{if((e.key==='ArrowRight'||e.key===' ')&&!started)startOnce();});
+lbl.addEventListener('click',()=>{
+  clearInterval(timerInterval);remaining=TOTAL_SECS;started=false;
+  bar.style.transform='scaleX(1)';bar.style.background='linear-gradient(90deg,#7c5cfc,#fc5c7d)';
+  lbl.textContent='2:00';lbl.classList.remove('warn');
+});
+</script>
+</body>
+</html>

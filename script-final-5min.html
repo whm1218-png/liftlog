@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiftLog — 최종 대본 (5분)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0d14;--card:#1a1a26;--accent:#7c5cfc;--accent2:#fc5c7d;--green:#22d3a5;--amber:#f5a623;--text:#f0f0f8;--muted:#7b7b9a;--border:rgba(124,92,252,0.2);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding:24px 20px 80px;}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .header-title{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;}
+  .timer-box{display:flex;align-items:center;gap:10px;}
+  .timer-display{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--text);min-width:70px;text-align:center;}
+  .timer-display.warn{color:var(--accent2);}
+  .btn{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-family:'JetBrains Mono',monospace;cursor:pointer;}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .progress-bar-bg{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:20px;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s ease;}
+  .tabs{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab{padding:5px 11px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;cursor:pointer;}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .tab.demo{border-color:var(--green);color:var(--green);}
+  .tab.demo.active{background:var(--green);color:#0a0a0f;}
+  .script-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:10px;}
+  .script-card.active-card{border-color:var(--accent);box-shadow:0 0 18px rgba(124,92,252,.15);}
+  .script-card.demo-card.active-card{border-color:var(--green);box-shadow:0 0 18px rgba(34,211,165,.15);}
+  .card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .slide-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .slide-num.done{background:rgba(34,211,165,.2);color:var(--green);}
+  .slide-name{font-size:14px;font-weight:700;}
+  .slide-time{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);background:rgba(124,92,252,.12);padding:3px 9px;border-radius:9px;flex-shrink:0;}
+  .slide-time.demo{color:var(--green);background:rgba(34,211,165,.12);}
+  .script-text{font-size:15px;line-height:1.85;color:#d8d8f0;}
+  .script-text strong{color:#fff;font-weight:600;}
+  .script-text .kw{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(34,211,165,.1);padding:1px 6px;border-radius:5px;}
+  .tip{margin-top:10px;padding:8px 12px;background:rgba(34,211,165,.07);border-left:3px solid var(--green);border-radius:0 6px 6px 0;font-size:12px;color:var(--muted);line-height:1.6;}
+  .tip strong{color:var(--green);}
+  .checklist{margin-top:10px;padding:8px 12px;background:rgba(124,92,252,.06);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:11px;color:var(--muted);line-height:1.7;}
+  .checklist strong{color:var(--accent);}
+  .sticky-now{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:9px 22px;border-radius:30px;font-size:13px;font-family:'JetBrains Mono',monospace;box-shadow:0 4px 24px rgba(124,92,252,.4);display:flex;align-items:center;gap:8px;cursor:pointer;z-index:100;}
+  .pulse{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">🎤 LiftLog 최종발표 대본 (5분 = 4:30 + 데모30s)</div>
+  <div class="timer-box">
+    <div class="timer-display" id="timer">5:00</div>
+    <button class="btn primary" id="start-btn" onclick="startTimer()">▶ 시작</button>
+    <button class="btn" onclick="resetTimer()">↺</button>
+  </div>
+</div>
+<div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:100%"></div></div>
+
+<div class="tabs" id="tabs"></div>
+<div id="scripts"></div>
+
+<div class="sticky-now" onclick="scrollToCurrent()"><div class="pulse"></div>현재 슬라이드로</div>
+
+<script>
+const SLIDES=[
+{
+  name:"타이틀 · 비전",
+  time:"0:00–0:30",
+  isDemo:false,
+  text:`안녕하세요. <strong>LiftLog</strong> 최종 발표를 시작하겠습니다.<br><br>
+저희 비전은 <strong>"헬스장에서 스마트폰 하나로 점진적 과부하를 설계하고, 데이터로 성장을 증명한다"</strong>입니다.<br>
+Flutter, SQLite, Firebase, 에플리 1RM 공식, MVVM 아키텍처로 만든 헬스 전용 앱입니다.`,
+  tip:`<strong>배점:</strong> 비전 표현(1) + 와닿게 표현(1). 천천히, 자신감 있게.`
+},
+{
+  name:"문제 정의 · 해결",
+  time:"0:30–1:00",
+  isDemo:false,
+  text:`<strong>"저번에 몇 kg 들었더라?"</strong> — 대부분의 헬스인은 기억에만 의존합니다.<br>
+기록이 없으니 무게를 언제 올려야 할지 모르고 <strong>정체기를 반복</strong>합니다.<br><br>
+LiftLog는 화면 <strong>네 번 터치</strong>로 기록을 끝내고, 에플리 공식으로 <strong>1RM을 자동 계산</strong>하며,<br>
+진행 차트로 성장을 눈으로 확인하게 합니다. 인터넷 없이도 <strong>100% 동작</strong>합니다.`,
+  tip:`<strong>배점:</strong> 문제 정의(1) + 공감대(1). "저번에 몇 kg" 부분에서 청중 반응 유도.`
+},
+{
+  name:"WBS · 기술스택",
+  time:"1:00–1:40",
+  isDemo:false,
+  text:`프로젝트는 10주차 기획부터 시작해 <strong>14주차까지 모두 완료</strong>했습니다.<br>
+기획 문서, 환경 구축, 핵심 기능 구현, 테스트, 배포까지 순서대로 진행했습니다.<br><br>
+기술 스택은 <strong>Flutter, SQLite, Firebase, 에플리 공식, MVVM+Riverpod</strong>이고,<br>
+각 선택은 <span class="kw">ADR-0001~0003</span> 문서에 배경과 대안, 결정 이유를 모두 기록했습니다.`,
+  tip:`<strong>배점:</strong> WBS 표현/구성(1) + 적용기술(1) + 진행·완료(1). ADR 번호를 정확히 말할 것.`
+},
+{
+  name:"아키텍처 · 구현방법",
+  time:"1:40–2:30",
+  isDemo:false,
+  text:`아키텍처는 <strong>4레이어 MVVM</strong>입니다.<br>
+화면을 그리는 Presentation, 상태를 관리하는 Application ViewModel,<br>
+에플리 공식이 들어있는 순수 Dart <strong>Domain</strong>, 그리고 SQLite와 Firestore를 담당하는 Data 레이어입니다.<br><br>
+실제 흐름은 — 기록 화면 입력 → ViewModel이 1RM 계산 → SQLite 저장 → Firebase 백업 순서입니다.<br>
+디렉토리는 <span class="kw">lib/presentation, application, domain, data</span> 4개 폴더로 분리되어 있습니다.`,
+  tip:`<strong>배점:</strong> 적용기술 설명(읽지않고)(1) + 아키텍처 이해(1) + 어떻게 구현했는지(1). 화살표 손으로 따라가기.`
+},
+{
+  name:"구현 시행착오 · 테스트 · 품질",
+  time:"2:30–3:20",
+  isDemo:false,
+  text:`개발 중 겪은 시행착오를 공유하겠습니다.<br>
+Firebase 동기화 후에도 같은 데이터가 계속 재업로드되는 버그가 있었는데,<br>
+원인은 <strong>synced 플래그를 업로드 전에 먼저 업데이트</strong>한 순서 오류였습니다.<br>
+"업로드 성공 확인 → 상태 변경" 순서로 고치고 재발 방지 테스트를 추가했습니다. <span class="kw">lessons/2026-05-18</span><br><br>
+<strong>단위 테스트 5개, 통합 테스트 1개</strong>를 작성했고 — 에플리 공식의 reps=0/1/8/15 케이스,<br>
+SQLite 마이그레이션 데이터 보존 테스트를 포함합니다. <span class="kw">flutter test</span>로 전체 실행 가능합니다.<br>
+세트 기록 응답은 <strong>200ms 이내</strong>로 측정했고, CI에서 flutter analyze로 코드 품질을 관리합니다.`,
+  tip:`<strong>배점:</strong> 시행착오(개발자 관점)(1) + 단위테스트(1) + 통합테스트(1) + 성능최적화(1) + 코드품질(1). 가장 점수 비중 높은 슬라이드!`
+},
+{
+  name:"개발환경 · 빌드배포 · ADR",
+  time:"3:20–4:00",
+  isDemo:false,
+  text:`개발 환경 설정은 <span class="kw">docs/setup.md</span>에 정리했습니다.<br>
+<strong>flutter pub get, flutter run</strong> 두 명령으로 누구나 5분 안에 실행할 수 있습니다.<br><br>
+빌드와 배포는 <span class="kw">docs/deploy.md</span>에 있습니다. <strong>flutter build apk --release</strong>로 릴리스 APK를 만들고,<br>
+Firebase App Distribution으로 테스터에게 배포합니다. GitHub Actions로 태그 push 시 자동 빌드됩니다.<br><br>
+질의응답 대비로 <span class="kw">ADR-0001(Flutter), ADR-0002(SQLite+Firebase), ADR-0003(Epley)</span> 세 개를<br>
+모두 README와 .planning/decisions/에 기록했습니다.`,
+  tip:`<strong>배점:</strong> 개발환경 설정(1) + 빌드/배포 단계(1) + ADR 최소3개(1) + GitHub 설치가이드(1). ADR 3개를 또렷이 말할 것.`
+},
+{
+  name:"🎬 데모 (30초)",
+  time:"4:00–4:30",
+  isDemo:true,
+  text:`지금부터 30초 데모를 보여드리겠습니다.<br><br>
+<strong>1)</strong> 벤치프레스 80kg, 8회를 입력하고 기록 버튼을 누르면 <strong>1RM 93.3kg이 자동으로 표시</strong>됩니다.<br>
+<strong>2)</strong> 동시에 휴식 타이머가 자동으로 시작됩니다.<br>
+<strong>3)</strong> 진행 차트로 넘어가면 4주간의 1RM 추이와 <strong>"+2.5kg" 뱃지</strong>를 확인할 수 있습니다.<br><br>
+이게 LiftLog가 사용자에게 주는 핵심 경험입니다.`,
+  tip:`<strong>배점:</strong> 30초 데모준비(1)+앱형태(1)+기본기능(1)+매끄러운전개(1)+임팩트(1) = 5점 전부!<br><strong>⚠️ 30초 정확히 맞추기. 미리 3회 이상 리허설.</strong>`
+},
+{
+  name:"마무리 · 활용방안 · 가산점",
+  time:"4:30–4:30+",
+  isDemo:false,
+  text:`LiftLog는 데이터 기반으로 정체기를 조기에 발견하게 해주고, 오프라인 헬스장에서도 100% 동작합니다.<br>
+다음 버전에서는 루틴 템플릿과 볼륨 차트를 추가할 계획입니다.<br><br>
+AI 활용 측면에서는 <span class="kw">/spec→/plan→/implement→/test→/review→/retro</span> 6단계 워크플로우와<br>
+3개의 서브에이전트를 사용했고, <span class="kw">AGENTS.md</span> 한 파일에 모든 정책을 정리했습니다.<br><br>
+가산점은 <strong>AI 워크플로우 활용(A), AUTHORING.md 단일 부트스트랩(B), lessons/ 암묵지 운영(C)</strong>를 신청합니다.<br><br>
+이상입니다. <strong>질문 받겠습니다.</strong>`,
+  tip:`<strong>배점:</strong> 활용방안/기대효과 + AI Agent 워크플로우 + 가산점 어필. "이상입니다 질문받겠습니다"로 명확히 종료.`
+}
+];
+
+const TOTAL_SECS=300;
+let current=0,remaining=TOTAL_SECS,started=false,timerInterval;
+const timerEl=document.getElementById('timer');
+const progFill=document.getElementById('prog-fill');
+const startBtn=document.getElementById('start-btn');
+
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function startTimer(){
+  if(started)return;
+  started=true;startBtn.textContent='⏸';startBtn.classList.remove('primary');
+  timerInterval=setInterval(()=>{
+    remaining--;
+    timerEl.textContent=fmt(remaining);
+    progFill.style.width=(remaining/TOTAL_SECS*100)+'%';
+    if(remaining<=45){timerEl.classList.add('warn');progFill.style.background='linear-gradient(90deg,#fc5c7d,#f5a623)';}
+    if(remaining<=0){clearInterval(timerInterval);timerEl.textContent='종료';}
+  },1000);
+}
+function resetTimer(){
+  clearInterval(timerInterval);remaining=TOTAL_SECS;started=false;
+  timerEl.textContent='5:00';timerEl.classList.remove('warn');
+  progFill.style.width='100%';progFill.style.background='linear-gradient(90deg,#7c5cfc,#fc5c7d)';
+  startBtn.textContent='▶ 시작';startBtn.classList.add('primary');
+}
+
+const tabsEl=document.getElementById('tabs');
+const scriptsEl=document.getElementById('scripts');
+
+SLIDES.forEach((s,i)=>{
+  const tab=document.createElement('button');
+  tab.className='tab'+(s.isDemo?' demo':'')+(i===0?' active':'');
+  tab.textContent=(i+1)+'. '+s.name.replace('🎬 ','');
+  tab.onclick=()=>setActive(i);
+  tabsEl.appendChild(tab);
+
+  const card=document.createElement('div');
+  card.className='script-card'+(s.isDemo?' demo-card':'')+(i===0?' active-card':'');
+  card.id='card-'+i;
+  card.innerHTML=`
+    <div class="card-header">
+      <div class="slide-num" id="num-${i}" style="${s.isDemo?'background:rgba(34,211,165,.2);color:var(--green);':''}">${i+1}</div>
+      <div class="slide-name">${s.name}</div>
+      <div class="slide-time${s.isDemo?' demo':''}">${s.time}</div>
+    </div>
+    <div class="script-text">${s.text}</div>
+    ${s.tip?`<div class="tip">${s.tip}</div>`:''}
+  `;
+  scriptsEl.appendChild(card);
+});
+
+function setActive(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.script-card').forEach((c,i)=>{
+    c.classList.toggle('active-card',i===n);
+    const numEl=document.getElementById('num-'+i);
+    if(i<n && !SLIDES[i].isDemo) numEl.classList.add('done');
+    if(i>=n) numEl.classList.remove('done');
+  });
+  current=n;
+}
+function scrollToCurrent(){document.getElementById('card-'+current)?.scrollIntoView({behavior:'smooth',block:'center'});}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();if(current<SLIDES.length-1)setActive(current+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(current>0)setActive(current-1);}
+  if(e.key==='Enter'&&!started)startTimer();
+});
+</script>
+</body>
+</html>
