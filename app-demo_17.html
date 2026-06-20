@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiftLog — 데모</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#07070c;--bg2:#0c0c14;
+    --card:#15151f;--card2:#1c1c29;--card-hover:#22222f;
+    --line:rgba(255,255,255,0.06);--line2:rgba(255,255,255,0.1);
+    --accent:#8b6cff;--accent-soft:rgba(139,108,255,0.14);
+    --pink:#ff6b9d;--pink-soft:rgba(255,107,157,0.14);
+    --green:#2dd4a8;--green-soft:rgba(45,212,168,0.14);
+    --amber:#ffb648;--amber-soft:rgba(255,182,72,0.14);
+    --text:#f5f5fa;--muted:#82839b;--muted2:#54556b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Noto Sans KR','Outfit',sans-serif;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .num{font-family:'JetBrains Mono','Outfit',monospace;}
+
+  .phone{
+    width:368px;height:740px;
+    background:var(--bg2);
+    border-radius:36px;
+    border:1px solid var(--line2);
+    overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 40px 80px -20px rgba(139,108,255,0.15), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    position:relative;
+  }
+  .status-bar{display:flex;justify-content:space-between;padding:16px 26px 2px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex-shrink:0;letter-spacing:.02em;}
+
+  .screen{flex:1;overflow-y:auto;display:none;}
+  .screen.active{display:block;animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  ::-webkit-scrollbar{width:0;}
+
+  .header{padding:14px 22px 18px;}
+  .header .eyebrow{font-size:11px;color:var(--accent);font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+  .header h1{font-size:23px;font-weight:700;letter-spacing:-0.01em;}
+  .header p{font-size:13px;color:var(--muted);margin-top:3px;}
+
+  .section{padding:18px 22px;}
+  .section-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+  .section-title .more{font-size:12px;color:var(--muted);font-weight:400;}
+
+  .row{display:flex;gap:10px;align-items:flex-end;}
+  .field{flex:1;}
+  .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:7px;font-weight:500;letter-spacing:.02em;}
+  .field .input-wrap{position:relative;}
+  .field input{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    color:var(--text);font-size:18px;font-weight:600;padding:13px 14px;font-family:'JetBrains Mono',monospace;
+    transition:border-color .15s, background .15s;
+  }
+  .field .unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted2);font-weight:500;pointer-events:none;}
+  .field input:focus{outline:none;border-color:var(--accent);background:var(--card2);}
+  .field input::-webkit-outer-spin-button,
+  .field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .field input[type=number]{-moz-appearance:textfield;}
+  .onerm-card.preview{opacity:0.7;}
+  .onerm-card .preview-tag{font-size:10px;color:var(--accent);background:rgba(139,108,255,0.18);padding:2px 8px;border-radius:8px;margin-left:8px;vertical-align:middle;}
+
+  .stepper{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .stepper input{
+    flex:1;width:auto;min-width:0;text-align:center;background:transparent;border:none;border-radius:0;
+    font-size:18px;font-weight:600;color:var(--text);font-family:'JetBrains Mono',monospace;padding:13px 0;
+  }
+  .stepper input:focus{outline:none;background:var(--card2);}
+  .stepper-btn{
+    width:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    color:var(--muted);cursor:pointer;transition:background .12s, color .12s;
+  }
+  .stepper-btn:active{background:var(--card2);color:var(--accent);}
+  .stepper-btn svg{width:14px;height:14px;}
+
+  .btn{
+    background:linear-gradient(135deg,var(--accent),#6f4dff);color:#fff;border:none;border-radius:14px;
+    padding:0 20px;height:48px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;
+    display:flex;align-items:center;gap:6px;font-family:'Noto Sans KR',sans-serif;
+    box-shadow:0 8px 20px -8px rgba(139,108,255,0.6);
+    transition:transform .12s, box-shadow .12s;
+  }
+  .btn:active{transform:scale(0.97);box-shadow:0 4px 12px -6px rgba(139,108,255,0.5);}
+  .btn-block{width:100%;justify-content:center;}
+  .btn-ghost{background:var(--card);color:var(--text);box-shadow:none;border:1px solid var(--line2);}
+  .btn-ghost.btn-active{background:var(--pink-soft);color:var(--pink);border-color:rgba(255,107,157,0.35);}
+
+  .warn{font-size:12px;color:var(--amber);margin-top:12px;display:flex;align-items:center;gap:6px;background:rgba(255,182,72,0.08);padding:8px 12px;border-radius:10px;}
+
+  .onerm-card{
+    background:linear-gradient(135deg, var(--accent-soft), var(--pink-soft));
+    border:1px solid rgba(139,108,255,0.25);border-radius:18px;padding:18px 20px;margin-bottom:16px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .onerm-label{font-size:12px;color:var(--muted);font-weight:500;}
+  .onerm-sub{font-size:11px;color:var(--muted2);margin-top:2px;}
+  .onerm-value{font-size:32px;font-weight:800;color:var(--text);letter-spacing:-0.02em;}
+  .onerm-value span{font-size:15px;color:var(--accent);font-weight:600;margin-left:2px;}
+
+  .set-list{display:none;}
+  .set-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border-radius:14px;border:1px solid var(--line);}
+  .set-num{width:26px;height:26px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+  .set-detail{flex:1;font-size:13px;font-weight:500;}
+  .set-detail .sep{color:var(--muted2);margin:0 4px;font-weight:400;}
+  .set-1rm{font-size:13px;color:var(--accent);font-weight:700;}
+  .set-1rm small{color:var(--muted2);font-weight:400;font-size:10px;display:block;text-align:right;}
+  .set-delete{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted2);cursor:pointer;flex-shrink:0;transition:color .15s, background .15s;}
+  .set-delete:active{color:var(--pink);background:rgba(255,107,157,0.12);}
+  .set-delete svg{width:16px;height:16px;}
+  .empty-hint{font-size:12px;color:var(--muted2);text-align:center;padding:16px 0;}
+
+  .chart-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;}
+  .chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .chart-title{font-size:14px;font-weight:600;}
+  .chart-title .ex-tag{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;display:block;}
+  .badge{font-size:12px;padding:5px 12px;border-radius:20px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+  .badge.pos{background:var(--green-soft);color:var(--green);}
+  .badge.neg{background:rgba(255,107,157,0.14);color:var(--pink);}
+  .badge.wait{background:var(--card2);color:var(--muted);}
+  .chart-wrap{position:relative;height:150px;}
+
+  .stat-row{display:flex;gap:10px;}
+  .stat-box{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 14px;}
+  .stat-box .icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:10px;}
+  .stat-box .num{font-size:22px;font-weight:800;letter-spacing:-0.01em;}
+  .stat-box .label{font-size:11px;color:var(--muted);margin-top:3px;}
+
+  .exercise-card{
+    display:flex;align-items:center;gap:14px;padding:14px;background:var(--card);
+    border:1px solid var(--line);border-radius:16px;margin-bottom:10px;
+    transition:border-color .15s, background .15s, transform .1s;cursor:pointer;
+  }
+  .exercise-card:active{background:var(--card-hover);transform:scale(0.98);}
+  .exercise-illust{
+    width:52px;height:52px;border-radius:14px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+  }
+  .exercise-illust svg{width:34px;height:34px;}
+  .ex-bench{background:linear-gradient(135deg, rgba(139,108,255,0.22), rgba(139,108,255,0.06));}
+  .ex-squat{background:linear-gradient(135deg, rgba(45,212,168,0.22), rgba(45,212,168,0.06));}
+  .ex-dead{background:linear-gradient(135deg, rgba(255,107,157,0.22), rgba(255,107,157,0.06));}
+  .ex-press{background:linear-gradient(135deg, rgba(255,182,72,0.22), rgba(255,182,72,0.06));}
+
+  .exercise-info{flex:1;}
+  .exercise-name{font-size:14px;font-weight:600;}
+  .exercise-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .exercise-1rm{text-align:right;}
+  .exercise-1rm .val{font-size:15px;font-weight:700;color:var(--text);}
+  .exercise-1rm .lbl{font-size:10px;color:var(--muted2);margin-top:2px;}
+  .exercise-1rm .delta{font-size:11px;font-weight:600;margin-top:3px;}
+  .exercise-1rm .delta.pos{color:var(--green);}
+
+  .chip-row{display:flex;gap:8px;overflow-x:auto;padding:0 22px 14px;margin-top:-6px;}
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip{
+    display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:30px;
+    background:var(--card);border:1px solid var(--line);font-size:12.5px;font-weight:600;
+    white-space:nowrap;cursor:pointer;flex-shrink:0;color:var(--muted);
+    transition:all .15s;
+  }
+  .chip svg{width:16px;height:16px;}
+  .chip.active{background:var(--accent-soft);border-color:rgba(139,108,255,0.35);color:var(--text);}
+  .chip:active{transform:scale(0.96);}
+
+  .timer-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;}
+  .timer-ring-wrap{position:relative;width:120px;height:120px;margin-bottom:14px;}
+  .timer-ring-wrap svg{transform:rotate(-90deg);}
+  .timer-bg{stroke:var(--card);}
+  .timer-fg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset 1s linear, stroke .3s;}
+  .timer-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+  .timer-label{font-size:12px;color:var(--muted);margin-bottom:16px;}
+
+  .profile-head{display:flex;align-items:center;gap:16px;padding:24px 22px 18px;}
+  .avatar{
+    width:58px;height:58px;border-radius:18px;
+    background:linear-gradient(135deg,var(--accent),var(--pink));
+    display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;
+  }
+  .profile-name{font-size:18px;font-weight:700;}
+  .profile-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+
+  .menu-item{display:flex;align-items:center;gap:14px;padding:15px 22px;border-top:1px solid var(--line);font-size:13px;font-weight:500;}
+  .menu-item .icon-wrap{width:34px;height:34px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted);}
+  .menu-arrow{margin-left:auto;color:var(--muted2);font-size:16px;}
+
+  .bottom-nav{display:flex;border-top:1px solid var(--line);background:rgba(12,12,20,0.92);flex-shrink:0;backdrop-filter:blur(20px);padding-bottom:4px;}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 0 8px;font-size:10px;color:var(--muted2);cursor:pointer;transition:color .15s;font-weight:500;}
+  .nav-item i{font-size:21px;}
+  .nav-item.active{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="icon-bench" viewBox="0 0 48 48">
+      <rect x="4" y="22" width="40" height="3.5" rx="1.75" fill="#8b6cff"/>
+      <circle cx="8" cy="22" r="5.5" fill="none" stroke="#8b6cff" stroke-width="3"/>
+      <circle cx="40" cy="22" r="5.5" fill="none" stroke="#8b6cff" stroke-width="3"/>
+      <rect x="12" y="29" width="24" height="6" rx="2" fill="#8b6cff" opacity="0.35"/>
+      <rect x="14" y="35" width="3" height="9" rx="1.5" fill="#8b6cff" opacity="0.55"/>
+      <rect x="31" y="35" width="3" height="9" rx="1.5" fill="#8b6cff" opacity="0.55"/>
+    </symbol>
+    <symbol id="icon-squat" viewBox="0 0 48 48">
+      <circle cx="24" cy="8" r="4.5" fill="#2dd4a8"/>
+      <path d="M24 13 L24 24" stroke="#2dd4a8" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M24 17 L12 13 M24 17 L36 13" stroke="#2dd4a8" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="11" cy="13" r="3.5" fill="none" stroke="#2dd4a8" stroke-width="2.5"/>
+      <circle cx="37" cy="13" r="3.5" fill="none" stroke="#2dd4a8" stroke-width="2.5"/>
+      <path d="M24 24 L16 32 L16 44 M24 24 L32 32 L32 44" stroke="#2dd4a8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-deadlift" viewBox="0 0 48 48">
+      <circle cx="14" cy="8" r="4.5" fill="#ff6b9d"/>
+      <path d="M14 13 C14 13 26 16 30 26" stroke="#ff6b9d" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+      <path d="M14 18 L9 28" stroke="#ff6b9d" stroke-width="3" stroke-linecap="round"/>
+      <path d="M30 26 L18 26" stroke="#ff6b9d" stroke-width="3" stroke-linecap="round"/>
+      <path d="M30 26 L34 38 M18 26 L20 38" stroke="#ff6b9d" stroke-width="3.5" stroke-linecap="round"/>
+      <rect x="4" y="34" width="40" height="3.5" rx="1.75" fill="#ff6b9d"/>
+      <circle cx="8" cy="34" r="5.5" fill="none" stroke="#ff6b9d" stroke-width="3"/>
+      <circle cx="40" cy="34" r="5.5" fill="none" stroke="#ff6b9d" stroke-width="3"/>
+    </symbol>
+    <symbol id="icon-press" viewBox="0 0 48 48">
+      <circle cx="24" cy="10" r="4.5" fill="#ffb648"/>
+      <rect x="4" y="6" width="40" height="3.5" rx="1.75" fill="#ffb648"/>
+      <circle cx="8" cy="7.5" r="5" fill="none" stroke="#ffb648" stroke-width="2.5"/>
+      <circle cx="40" cy="7.5" r="5" fill="none" stroke="#ffb648" stroke-width="2.5"/>
+      <path d="M24 15 L24 28" stroke="#ffb648" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M24 28 L16 36 L16 44 M24 28 L32 36 L32 44" stroke="#ffb648" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M24 18 L14 8 M24 18 L34 8" stroke="#ffb648" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span><i class="ti ti-wifi"></i> <i class="ti ti-battery-2"></i></span>
+  </div>
+
+  <div class="screen active" id="screen-home">
+    <div class="header">
+      <div class="eyebrow">LiftLog</div>
+      <h1>안녕하세요, 민준님</h1>
+      <p>오늘도 한 세트 더 — 어제보다 강하게</p>
+    </div>
+    <div class="section" style="padding-top:0;">
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="icon" style="background:var(--accent-soft);color:var(--accent);"><i class="ti ti-flame"></i></div>
+          <div class="num">3</div><div class="label">이번 주 세션</div>
+        </div>
+        <div class="stat-box">
+          <div class="icon" style="background:var(--pink-soft);color:var(--pink);"><i class="ti ti-weight"></i></div>
+          <div class="num">8,240</div><div class="label">총 볼륨 (kg)</div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">최근 기록 <span class="more">탭하여 기록 계속하기</span></div>
+      <div id="home-recent-list"></div>
+    </div>
+    <div class="section" style="padding-top:4px;">
+      <button class="btn btn-block" onclick="goScreen('record')"><i class="ti ti-plus" style="font-size:18px;"></i>오늘 운동 시작</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-record">
+    <div class="header">
+      <div class="eyebrow">기록 · Push &amp; Pull Day</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="exercise-illust" id="record-icon" style="width:40px;height:40px;border-radius:11px;"><svg style="width:26px;height:26px;"><use id="record-icon-use" href="#icon-bench"/></svg></div>
+        <h1 id="record-title">벤치프레스</h1>
+      </div>
+    </div>
+    <div class="chip-row" id="exercise-chips"></div>
+    <div class="section" style="padding-top:0;">
+      <div class="field" style="margin-bottom:10px;">
+        <label>무게 (kg)</label>
+        <div class="stepper">
+          <div class="stepper-btn" id="weightMinus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg></div>
+          <input type="number" id="weight" value="80" min="0" step="2.5">
+          <div class="stepper-btn" id="weightPlus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>반복 (회)</label>
+        <div class="stepper">
+          <div class="stepper-btn" id="repsMinus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg></div>
+          <input type="number" id="reps" value="8" min="1" step="1">
+          <div class="stepper-btn" id="repsPlus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-block" id="addBtn"><i class="ti ti-plus" style="font-size:18px;"></i>기록</button>
+      </div>
+      <div class="warn" id="warn" style="display:none;">
+        <i class="ti ti-alert-triangle"></i>12회 초과 — 1RM 추정 오차가 커질 수 있어요
+      </div>
+    </div>
+    <div class="section">
+      <div class="onerm-card" id="oneRMCard">
+        <div>
+          <div class="onerm-label">추정 1RM<span class="preview-tag" id="previewTag" style="display:none;">미리보기</span></div>
+          <div class="onerm-sub">에플리(Epley) 공식</div>
+        </div>
+        <div class="onerm-value" id="oneRM">93.3<span>kg</span></div>
+      </div>
+      <div id="lastSetRow" style="display:none;">
+        <div class="ex-tag" style="margin-bottom:6px;display:block;">방금 기록한 세트</div>
+        <div class="set-row">
+          <div class="set-num" id="lastSetNum">1</div>
+          <div class="set-detail" id="lastSetDetail">80kg × 8회</div>
+          <div class="set-1rm" id="lastSet1rm">93.3kg<small>1RM</small></div>
+          <div class="set-delete" id="deleteLastSet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/><path d="M10 11v6M14 11v6"/></svg></div>
+        </div>
+      </div>
+      <div class="set-list" id="setList"></div>
+    </div>
+    <div class="section" style="padding-top:0;">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">1RM 추이</div>
+            <span class="ex-tag">기록할수록 업데이트됩니다</span>
+          </div>
+          <span class="badge" id="badge1">대기중</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart1"></canvas></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">휴식 타이머</div>
+      <div class="chart-card">
+        <div class="timer-wrap">
+          <div class="timer-ring-wrap">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle class="timer-bg" cx="60" cy="60" r="52" fill="none" stroke-width="8"/>
+              <circle class="timer-fg" id="timerCircle" cx="60" cy="60" r="52" fill="none" stroke-width="8" stroke-dasharray="327" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-text" id="timerRing">1:30</div>
+          </div>
+          <div class="timer-label">다음 세트까지 남은 시간</div>
+          <button class="btn btn-ghost" id="timerBtn">타이머 시작</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-progress">
+    <div class="header">
+      <div class="eyebrow">진행 현황</div>
+      <h1>1RM 추이</h1>
+      <p>꾸준함이 데이터가 됩니다</p>
+    </div>
+    <div class="chip-row" id="progress-chips"></div>
+    <div class="section" style="padding-top:0;">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title" id="progress-title">벤치프레스</div>
+            <span class="ex-tag">최근 기록 기준</span>
+          </div>
+          <span class="badge" id="badge2">대기중</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart2"></canvas></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="icon" style="background:var(--accent-soft);color:var(--accent);"><i class="ti ti-trophy"></i></div>
+          <div class="num" id="maxRm">93.3</div><div class="label">최고 1RM (kg)</div>
+        </div>
+        <div class="stat-box">
+          <div class="icon" style="background:var(--green-soft);color:var(--green);"><i class="ti ti-list-check"></i></div>
+          <div class="num" id="setCount">3</div><div class="label">기록된 세트</div>
+        </div>
+      </div>
+    </div>
+    <div class="section" style="padding-top:0;">
+      <div class="section-title">다른 운동</div>
+      <div id="progress-other-list"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-profile">
+    <div class="profile-head">
+      <div class="avatar">민준</div>
+      <div><div class="profile-name">김민준</div><div class="profile-sub">헬스 경력 3년 · 목표: 벤치 100kg</div></div>
+    </div>
+    <div class="section" style="padding-top:0;">
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="icon" style="background:var(--accent-soft);color:var(--accent);"><i class="ti ti-calendar-stats"></i></div>
+          <div class="num">47</div><div class="label">총 세션</div>
+        </div>
+        <div class="stat-box">
+          <div class="icon" style="background:var(--pink-soft);color:var(--pink);"><i class="ti ti-stack-2"></i></div>
+          <div class="num">124</div><div class="label">누적 볼륨(톤)</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:6px;">
+      <div class="menu-item"><div class="icon-wrap"><i class="ti ti-cloud-upload"></i></div><span>클라우드 백업</span><i class="ti ti-chevron-right menu-arrow"></i></div>
+      <div class="menu-item"><div class="icon-wrap"><i class="ti ti-settings"></i></div><span>설정</span><i class="ti ti-chevron-right menu-arrow"></i></div>
+      <div class="menu-item"><div class="icon-wrap"><i class="ti ti-math-function"></i></div><span>1RM 공식 (Epley)</span><i class="ti ti-chevron-right menu-arrow"></i></div>
+      <div class="menu-item"><div class="icon-wrap"><i class="ti ti-file-export"></i></div><span>데이터 내보내기</span><i class="ti ti-chevron-right menu-arrow"></i></div>
+      <div class="menu-item"><div class="icon-wrap"><i class="ti ti-logout"></i></div><span>로그아웃</span><i class="ti ti-chevron-right menu-arrow"></i></div>
+      <div class="menu-item" id="resetDataBtn" style="cursor:pointer;"><div class="icon-wrap" style="color:var(--pink);"><i class="ti ti-refresh"></i></div><span style="color:var(--pink);">데이터 초기화</span><i class="ti ti-chevron-right menu-arrow"></i></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" data-screen="home" onclick="goScreen('home')"><i class="ti ti-home"></i>홈</div>
+    <div class="nav-item" data-screen="record" onclick="goScreen('record')"><i class="ti ti-plus-circle"></i>기록</div>
+    <div class="nav-item" data-screen="progress" onclick="goScreen('progress')"><i class="ti ti-chart-line"></i>진행</div>
+    <div class="nav-item" data-screen="profile" onclick="goScreen('profile')"><i class="ti ti-user"></i>프로필</div>
+  </div>
+</div>
+
+<script>
+const EXERCISES = {
+  bench: {
+    name: '벤치프레스', icon: 'icon-bench', cls: 'ex-bench',
+    sets: [{weight:75, reps:8},{weight:77.5, reps:8},{weight:80, reps:8}]
+  },
+  squat: {
+    name: '스쿼트', icon: 'icon-squat', cls: 'ex-squat',
+    sets: [{weight:90, reps:5},{weight:95, reps:5},{weight:100, reps:5},{weight:100, reps:5}]
+  },
+  deadlift: {
+    name: '데드리프트', icon: 'icon-deadlift', cls: 'ex-dead',
+    sets: [{weight:110, reps:5},{weight:115, reps:5},{weight:120, reps:5}]
+  },
+  press: {
+    name: '오버헤드프레스', icon: 'icon-press', cls: 'ex-press',
+    sets: [{weight:40, reps:8},{weight:42.5, reps:6},{weight:45, reps:5}]
+  }
+};
+
+const INITIAL_SETS = JSON.parse(JSON.stringify({
+  bench: EXERCISES.bench.sets,
+  squat: EXERCISES.squat.sets,
+  deadlift: EXERCISES.deadlift.sets,
+  press: EXERCISES.press.sets
+}));
+
+function resetAllData(){
+  Object.keys(EXERCISES).forEach(key=>{
+    EXERCISES[key].sets = JSON.parse(JSON.stringify(INITIAL_SETS[key]));
+  });
+  currentExercise = 'bench';
+  document.getElementById('weight').value = 80;
+  document.getElementById('reps').value = 8;
+  stopTimer();
+  renderHomeScreen();
+  renderRecordScreen();
+  updateLivePreview();
+  goScreen('home');
+}
+
+let currentExercise = 'bench';
+let timerInterval, timerRemaining = 90, timerTotal = 90;
+let chart1, chart2;
+let timerRunning = false;
+const CIRC = 2 * Math.PI * 52;
+
+function estimate1RM(weight, reps){
+  if(reps <= 0) return 0;
+  if(reps === 1) return weight;
+  return weight * (1 + reps/30);
+}
+
+function maxOneRM(sets){
+  if(sets.length===0) return 0;
+  return Math.round(Math.max(...sets.map(s=>estimate1RM(s.weight,s.reps)))*10)/10;
+}
+
+function renderChart(chartVar, canvasId, badgeId, sets){
+  const labels = sets.map((s,i)=>'Set '+(i+1));
+  const data = sets.map(s=>Math.round(estimate1RM(s.weight,s.reps)*10)/10);
+
+  if(!chartVar){
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    chartVar = new Chart(ctx,{
+      type:'line',
+      data:{labels:labels, datasets:[{data:data, borderColor:'#8b6cff', backgroundColor:'rgba(139,108,255,0.18)', fill:true, tension:0.35, pointRadius:4, pointBackgroundColor:'#8b6cff', pointBorderColor:'#07070c', pointBorderWidth:2, borderWidth:3}]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          y:{ticks:{color:'#82839b', font:{size:11, family:'JetBrains Mono'}}, grid:{color:'rgba(255,255,255,0.04)'}, border:{display:false}},
+          x:{ticks:{color:'#82839b', font:{size:11, family:'JetBrains Mono'}}, grid:{display:false}, border:{display:false}}
+        }
+      }
+    });
+  } else {
+    chartVar.data.labels = labels;
+    chartVar.data.datasets[0].data = data;
+    chartVar.update();
+  }
+
+  const badge = document.getElementById(badgeId);
+  if(data.length>=2){
+    const diff = Math.round((data[data.length-1]-data[0])*10)/10;
+    const sign = diff>=0 ? '+' : '';
+    badge.textContent = sign+diff+'kg';
+    badge.className = 'badge ' + (diff>=0 ? 'pos' : 'neg');
+  } else {
+    badge.textContent = '대기중';
+    badge.className = 'badge wait';
+  }
+
+  return chartVar;
+}
+
+function goScreen(name, exerciseKey){
+  if(exerciseKey){
+    currentExercise = exerciseKey;
+    if(name==='record') renderRecordScreen();
+    if(name==='progress') renderProgressScreen();
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===name));
+  if(name==='home') renderHomeScreen();
+  if(name==='progress' && !exerciseKey) renderProgressScreen();
+  if(name==='record' && !exerciseKey) renderRecordScreen();
+  requestAnimationFrame(()=>{
+    if(chart1) chart1.resize();
+    if(chart2) chart2.resize();
+  });
+}
+
+function buildChips(containerId, onSelect){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  Object.keys(EXERCISES).forEach(key=>{
+    const ex = EXERCISES[key];
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (key===currentExercise ? ' active' : '');
+    chip.innerHTML = '<svg><use href="#'+ex.icon+'"/></svg>'+ex.name;
+    chip.onclick = ()=>{ currentExercise = key; onSelect(); };
+    wrap.appendChild(chip);
+  });
+}
+
+function renderHomeScreen(){
+  const list = document.getElementById('home-recent-list');
+  list.innerHTML = '';
+  Object.keys(EXERCISES).forEach(key=>{
+    const ex = EXERCISES[key];
+    const last = ex.sets[ex.sets.length-1];
+    const max = maxOneRM(ex.sets);
+    const card = document.createElement('div');
+    card.className = 'exercise-card';
+    card.onclick = ()=>goScreen('record', key);
+    if(ex.sets.length>0){
+      card.innerHTML =
+        '<div class="exercise-illust '+ex.cls+'"><svg><use href="#'+ex.icon+'"/></svg></div>'+
+        '<div class="exercise-info"><div class="exercise-name">'+ex.name+'</div><div class="exercise-meta">'+ex.sets.length+'세트 · '+last.reps+'회 · '+last.weight+'kg</div></div>'+
+        '<div class="exercise-1rm"><div class="val">'+max+'kg</div><div class="lbl">추정 1RM</div></div>';
+    } else {
+      card.innerHTML =
+        '<div class="exercise-illust '+ex.cls+'"><svg><use href="#'+ex.icon+'"/></svg></div>'+
+        '<div class="exercise-info"><div class="exercise-name">'+ex.name+'</div><div class="exercise-meta">아직 기록 없음</div></div>'+
+        '<div class="exercise-1rm"><div class="val">-</div><div class="lbl">탭하여 시작</div></div>';
+    }
+    list.appendChild(card);
+  });
+}
+
+function renderRecordScreen(){
+  const ex = EXERCISES[currentExercise];
+  document.getElementById('record-title').textContent = ex.name;
+  document.getElementById('record-icon-use').setAttribute('href', '#'+ex.icon);
+  const iconBox = document.getElementById('record-icon');
+  iconBox.className = 'exercise-illust ' + ex.cls;
+  iconBox.style.width = '40px'; iconBox.style.height='40px'; iconBox.style.borderRadius='11px';
+
+  buildChips('exercise-chips', renderRecordScreen);
+
+  const list = document.getElementById('setList');
+  list.innerHTML = '';
+  if(ex.sets.length===0){
+    list.innerHTML = '<div class="empty-hint">아직 기록이 없습니다. 무게와 반복을 입력하고 기록해보세요.</div>';
+  }
+  ex.sets.forEach((s,i)=>{
+    const rm = Math.round(estimate1RM(s.weight, s.reps) * 10)/10;
+    const row = document.createElement('div');
+    row.className = 'set-row';
+    row.innerHTML = '<div class="set-num">'+(i+1)+'</div><div class="set-detail">'+s.weight+'kg<span class="sep">×</span>'+s.reps+'회</div><div class="set-1rm">'+rm+'kg<small>1RM</small></div><div class="set-delete" data-index="'+i+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/><path d="M10 11v6M14 11v6"/></svg></div>';
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.set-delete').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const idx = parseInt(btn.dataset.index);
+      EXERCISES[currentExercise].sets.splice(idx, 1);
+      renderRecordScreen();
+    });
+  });
+
+  const max = maxOneRM(ex.sets);
+  document.getElementById('oneRM').innerHTML = (ex.sets.length>0 ? max : '-')+'<span>kg</span>';
+  document.getElementById('oneRMCard').classList.remove('preview');
+  document.getElementById('previewTag').style.display = 'none';
+
+  const lastRow = document.getElementById('lastSetRow');
+  if(ex.sets.length>0){
+    const s = ex.sets[ex.sets.length-1];
+    const rm = Math.round(estimate1RM(s.weight, s.reps) * 10)/10;
+    document.getElementById('lastSetNum').textContent = ex.sets.length;
+    document.getElementById('lastSetDetail').innerHTML = s.weight+'kg<span class="sep">×</span>'+s.reps+'회';
+    document.getElementById('lastSet1rm').innerHTML = rm+'kg<small>1RM</small>';
+    lastRow.style.display = 'block';
+  } else {
+    lastRow.style.display = 'none';
+  }
+
+  chart1 = renderChart(chart1, 'chart1', 'badge1', ex.sets);
+
+  const last = ex.sets[ex.sets.length-1];
+  document.getElementById('warn').style.display = (last && last.reps>12) ? 'flex' : 'none';
+
+  resetTimerDisplay();
+}
+
+function renderProgressScreen(){
+  const ex = EXERCISES[currentExercise];
+  document.getElementById('progress-title').textContent = ex.name;
+  buildChips('progress-chips', renderProgressScreen);
+
+  const data = ex.sets.map(s=>Math.round(estimate1RM(s.weight,s.reps)*10)/10);
+  chart2 = renderChart(chart2, 'chart2', 'badge2', ex.sets);
+
+  document.getElementById('maxRm').textContent = data.length>0 ? maxOneRM(ex.sets) : '-';
+  document.getElementById('setCount').textContent = ex.sets.length;
+
+  const otherList = document.getElementById('progress-other-list');
+  otherList.innerHTML = '';
+  Object.keys(EXERCISES).filter(k=>k!==currentExercise).forEach(key=>{
+    const o = EXERCISES[key];
+    const oMax = maxOneRM(o.sets);
+    const oData = o.sets.map(s=>Math.round(estimate1RM(s.weight,s.reps)*10)/10);
+    let deltaHtml = '<div class="delta" style="color:var(--muted2);font-weight:400;">기록 없음</div>';
+    if(oData.length>=2){
+      const diff = Math.round((oData[oData.length-1]-oData[0])*10)/10;
+      const sign = diff>=0?'+':'';
+      deltaHtml = '<div class="delta '+(diff>=0?'pos':'')+'">'+sign+diff+'kg</div>';
+    }
+    const card = document.createElement('div');
+    card.className = 'exercise-card';
+    card.onclick = ()=>goScreen('progress', key);
+    card.innerHTML =
+      '<div class="exercise-illust '+o.cls+'"><svg><use href="#'+o.icon+'"/></svg></div>'+
+      '<div class="exercise-info"><div class="exercise-name">'+o.name+'</div><div class="exercise-meta">'+o.sets.length+'세트 기록</div></div>'+
+      '<div class="exercise-1rm"><div class="val">'+(oData.length>0?oMax+'kg':'-')+'</div>'+deltaHtml+'</div>';
+    otherList.appendChild(card);
+  });
+}
+
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  const weight = parseFloat(document.getElementById('weight').value);
+  const reps = parseInt(document.getElementById('reps').value);
+  if(isNaN(weight)||isNaN(reps)||weight<=0||reps<=0) return;
+  EXERCISES[currentExercise].sets.push({weight, reps});
+  renderRecordScreen();
+  startTimer();
+});
+
+function updateLivePreview(){
+  const weight = parseFloat(document.getElementById('weight').value);
+  const reps = parseInt(document.getElementById('reps').value);
+  const card = document.getElementById('oneRMCard');
+  const valueEl = document.getElementById('oneRM');
+  const tagEl = document.getElementById('previewTag');
+  const warnEl = document.getElementById('warn');
+
+  if(isNaN(weight)||isNaN(reps)||weight<=0||reps<=0){
+    card.classList.remove('preview');
+    tagEl.style.display = 'none';
+    const ex = EXERCISES[currentExercise];
+    const max = maxOneRM(ex.sets);
+    valueEl.innerHTML = (ex.sets.length>0 ? max : '-')+'<span>kg</span>';
+    return;
+  }
+
+  const live = Math.round(estimate1RM(weight, reps) * 10)/10;
+  valueEl.innerHTML = live+'<span>kg</span>';
+  card.classList.add('preview');
+  tagEl.style.display = 'inline';
+  warnEl.style.display = reps>12 ? 'flex' : 'none';
+}
+
+document.getElementById('deleteLastSet').addEventListener('click', ()=>{
+  const ex = EXERCISES[currentExercise];
+  if(ex.sets.length>0){
+    ex.sets.pop();
+    renderRecordScreen();
+  }
+});
+
+document.getElementById('weight').addEventListener('input', updateLivePreview);
+document.getElementById('reps').addEventListener('input', updateLivePreview);
+
+function stepValue(inputId, delta, min){
+  const input = document.getElementById(inputId);
+  let val = parseFloat(input.value);
+  if(isNaN(val)) val = min;
+  val = Math.round((val + delta) * 100) / 100;
+  if(val < min) val = min;
+  input.value = val;
+  updateLivePreview();
+}
+
+document.getElementById('weightMinus').addEventListener('click', ()=>stepValue('weight', -2.5, 0));
+document.getElementById('weightPlus').addEventListener('click', ()=>stepValue('weight', 2.5, 0));
+document.getElementById('repsMinus').addEventListener('click', ()=>stepValue('reps', -1, 1));
+document.getElementById('repsPlus').addEventListener('click', ()=>stepValue('reps', 1, 1));
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerRunning = true;
+  timerRemaining = timerTotal;
+  document.getElementById('timerCircle').style.stroke = '#8b6cff';
+  updateTimerDisplay();
+  document.getElementById('timerBtn').textContent = '타이머 끄기';
+  document.getElementById('timerBtn').classList.add('btn-active');
+  timerInterval = setInterval(()=>{
+    timerRemaining--;
+    updateTimerDisplay();
+    if(timerRemaining<=0){
+      clearInterval(timerInterval);
+      timerRunning = false;
+      document.getElementById('timerCircle').style.stroke = '#2dd4a8';
+      document.getElementById('timerBtn').textContent = '휴식 완료!';
+      document.getElementById('timerBtn').classList.remove('btn-active');
+    }
+  },1000);
+}
+function stopTimer(){
+  clearInterval(timerInterval);
+  timerRunning = false;
+  resetTimerDisplay();
+}
+function toggleTimer(){
+  if(timerRunning){
+    stopTimer();
+  } else {
+    startTimer();
+  }
+}
+function updateTimerDisplay(){
+  const m = Math.floor(timerRemaining/60);
+  const s = timerRemaining%60;
+  document.getElementById('timerRing').textContent = m+':'+String(s).padStart(2,'0');
+  const offset = CIRC * (1 - timerRemaining/timerTotal);
+  document.getElementById('timerCircle').style.strokeDashoffset = offset;
+}
+function resetTimerDisplay(){
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerRemaining = timerTotal;
+  document.getElementById('timerRing').textContent = '1:30';
+  document.getElementById('timerBtn').textContent = '타이머 시작';
+  document.getElementById('timerBtn').classList.remove('btn-active');
+  document.getElementById('timerCircle').style.stroke = '#8b6cff';
+  document.getElementById('timerCircle').style.strokeDasharray = CIRC;
+  document.getElementById('timerCircle').style.strokeDashoffset = 0;
+}
+
+document.getElementById('timerBtn').addEventListener('click', toggleTimer);
+document.getElementById('resetDataBtn').addEventListener('click', resetAllData);
+
+renderHomeScreen();
+renderRecordScreen();
+updateLivePreview();
+</script>
+</body>
+</html>
