@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiftLog — 발표 허브</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07070c;--card:#15151f;--accent:#8b6cff;--pink:#ff6b9d;--green:#2dd4a8;--amber:#ffb648;
+    --text:#f5f5fa;--muted:#82839b;--line:rgba(255,255,255,0.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{
+    background:radial-gradient(circle at 20% 0%, rgba(139,108,255,0.12), transparent 50%),
+               radial-gradient(circle at 80% 100%, rgba(255,107,157,0.08), transparent 50%),
+               var(--bg);
+    color:var(--text);font-family:'Noto Sans KR','Outfit',sans-serif;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px;
+  }
+  .wrap{max-width:560px;width:100%;}
+  .eyebrow{font-size:13px;color:var(--accent);font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;text-align:center;}
+  h1{font-family:'Outfit',sans-serif;font-size:clamp(48px,9vw,80px);font-weight:800;line-height:1;text-align:center;
+     background:linear-gradient(135deg,#fff 0%,var(--accent) 60%,var(--pink) 100%);
+     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+     margin-bottom:14px;letter-spacing:-0.02em;}
+  .sub{font-size:16px;color:var(--muted);text-align:center;margin-bottom:40px;line-height:1.6;}
+  .sub strong{color:var(--text);}
+  .links{display:flex;flex-direction:column;gap:14px;}
+  .link{
+    display:flex;align-items:center;gap:18px;padding:22px 24px;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    color:var(--text);text-decoration:none;transition:transform .15s, border-color .15s, background .15s;
+  }
+  .link:hover{transform:translateY(-2px);border-color:rgba(139,108,255,0.4);background:#1c1c29;}
+  .link:active{transform:translateY(0);}
+  .icon{
+    width:54px;height:54px;border-radius:15px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:24px;
+  }
+  .icon.presentation{background:rgba(139,108,255,0.15);color:var(--accent);}
+  .icon.script{background:rgba(255,107,157,0.15);color:var(--pink);}
+  .icon.demo{background:rgba(45,212,168,0.15);color:var(--green);}
+  .info{flex:1;}
+  .info .title{font-size:17px;font-weight:700;margin-bottom:3px;}
+  .info .desc{font-size:12px;color:var(--muted);line-height:1.5;}
+  .arrow{color:var(--muted);font-size:22px;flex-shrink:0;}
+  footer{margin-top:36px;text-align:center;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.05em;}
+  footer .url{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Vibe Coding Project · 최종 발표</div>
+  <h1>LIFTLOG</h1>
+  <div class="sub">매일의 운동을 기록해서<br><strong>저번의 나를 이기는</strong> 헬스 앱</div>
+
+  <div class="links">
+    <a class="link" href="presentation-final-5min.html">
+      <div class="icon presentation">🎤</div>
+      <div class="info"><div class="title">발표 슬라이드</div><div class="desc">5분 발표용 · 8 슬라이드 · 5분 타이머 내장</div></div>
+      <div class="arrow">→</div>
+    </a>
+    <a class="link" href="script-final-5min_8.html">
+      <div class="icon script">📋</div>
+      <div class="info"><div class="title">발표 대본</div><div class="desc">슬라이드별 멘트 · 시간 분배 · 폰으로 열기</div></div>
+      <div class="arrow">→</div>
+    </a>
+    <a class="link" href="app-demo_21.html">
+      <div class="icon demo">🎬</div>
+      <div class="info"><div class="title">데모 앱</div><div class="desc">캘린더·기록·진행·프로필 · 라이브 시연용</div></div>
+      <div class="arrow">→</div>
+    </a>
+  </div>
+
+  <footer>whm1218-png.github.io/<span class="url">liftlog</span></footer>
+</div>
+</body>
+</html>
